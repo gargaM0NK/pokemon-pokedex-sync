@@ -1,0 +1,37 @@
+name: Sync Pokemon Pokedex
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '7,22,37,52 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Download Google Sheet
+        run: |
+          curl -L \
+            'https://docs.google.com/spreadsheets/d/e/2PACX-1vQJympxtPV5RDM6L5E_HxQW80unjWFXqmvk59QgUNoXnXLUd2zlWjMBS8e5g7LHtV6_-6MBdI2zJ-yO/pub?gid=2066579811&single=true&output=csv' \
+            -o pokedex.csv
+
+      - name: Commit updated data
+        run: |
+          git config user.name "Pokedex Sync"
+          git config user.email "pokedex-sync@users.noreply.github.com"
+
+          git add pokedex.csv
+
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "Update Pokedex data"
+            git push
+          fi
